@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Vararo</string>
+    <string name="no_items">There are no items yet!\n Click the + icon to add a new item</string>
+</resources>

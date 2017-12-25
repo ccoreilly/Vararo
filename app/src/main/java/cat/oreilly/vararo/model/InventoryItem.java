@@ -23,7 +23,7 @@ public class InventoryItem extends SugarRecord {
         this.name = name;
         this.mainPicture = mainPicture;
         this.pictures = pictures;
-        this.parent = parent;
+        this.parent = (parent == null) ? new UUID(0,0): parent;
         this.tags = tags;
         this.id = UUID.randomUUID();
     }
