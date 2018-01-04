@@ -61,7 +61,7 @@ public class InventoryItemListAdapter extends RecyclerView.Adapter<InventoryItem
         holder.recyclerView.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                itemLoader.loadChildren(id);
+                itemLoader.openItem(id);
             }
         });
 
