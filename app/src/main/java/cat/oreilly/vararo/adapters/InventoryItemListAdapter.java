@@ -1,6 +1,8 @@
 package cat.oreilly.vararo.adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -70,7 +72,9 @@ public class InventoryItemListAdapter extends RecyclerView.Adapter<InventoryItem
         //String basePath = "" + context.getFilesDir();
         //String imagePath = basePath + "/images/" + item.getMainPicture();
         File f = new File(item.getMainPicture());
-        Picasso.with(context).load(f).into(holder.itemImage);
+        //Picasso.with(context).load(f).into(holder.itemImage);
+        Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
+        holder.itemImage.setImageBitmap(bmp);
         holder.itemName.setText(item.getName());
         final Long id = item.getId();
 

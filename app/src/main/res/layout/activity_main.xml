@@ -27,6 +27,11 @@
             android:layout_marginTop="8dp" />
     </android.support.constraint.ConstraintLayout>
 
+    <ImageView
+        android:id="@+id/item_main_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"

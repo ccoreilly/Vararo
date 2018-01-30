@@ -1,6 +1,8 @@
 package cat.oreilly.vararo.activities;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -13,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
 
@@ -35,10 +38,12 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
     InventoryItemListAdapter rvAdapter;
     List<InventoryItem> items;
     TextView textView;
+    ImageView mainImage;
     private FloatingActionButton fabAddItem, fabAddPicture, fabAddFolder;
     private Boolean isFabOpen = false;
     private Animation fabOpen, fabClose, rotateForward, rotateBackward;
     Long currentParent;
+    InventoryItem currentItem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
 
         textView =  findViewById(R.id.no_items);
         recyclerView = findViewById(R.id.item_list); // cerquem la nostra vista de tipus RecyclerView
+        mainImage = findViewById(R.id.item_main_image);
 
         captureIntent(null);
 
@@ -96,13 +102,30 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
         } else {
             currentParent = id;
         }
-        Log.d(TAG, currentParent.toString());
         items = InventoryItem.find(InventoryItem.class, "parent = ?", currentParent.toString());
     }
 
     public void openItem(Long id) {
+        Log.d(TAG, "Current item: " + id.toString());
         loadChildren(id);
-        rvAdapter.setItems(items);
+        if(!id.equals(0L)) {
+            currentItem = InventoryItem.findById(InventoryItem.class, id);
+            File f = new File(currentItem.getMainPicture());
+            Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
+            mainImage.setImageBitmap(bmp);
+            mainImage.setImageAlpha(100);
+        } else {
+            mainImage.setImageResource(android.R.color.transparent);
+        }
+
+        if (items.isEmpty()) {
+            textView.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            textView.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+            rvAdapter.setItems(items);
+        }
     }
 
     @Override
@@ -137,6 +160,15 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
             fabAddFolder.setClickable(true);
             fabAddPicture.setClickable(true);
             isFabOpen = true;
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!currentParent.equals(0L)) {
+            Long id = currentItem.getParent();
+            Log.d(TAG, "Loading parent: " + id.toString());
+            openItem(id);
         }
     }
 
