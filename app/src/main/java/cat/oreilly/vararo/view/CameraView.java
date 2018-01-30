@@ -1,12 +1,9 @@
 package cat.oreilly.vararo.view;
 
-import android.app.Activity;
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
-import android.hardware.Camera.CameraInfo;
-import android.support.annotation.UiThread;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
@@ -16,6 +13,8 @@ import android.view.SurfaceView;
 import java.io.IOException;
 import java.util.List;
 
+import cat.oreilly.vararo.interfaces.SaveImageInterface;
+
 public class CameraView extends SurfaceView  implements SurfaceHolder.Callback {
     private String TAG = "CameraView";
 
@@ -23,6 +22,8 @@ public class CameraView extends SurfaceView  implements SurfaceHolder.Callback {
     private Camera camera;
     private Surface surface;
     private boolean previewStarted = false;
+
+    private SaveImageInterface saveImageInterface;
 
     public CameraView(Context context) {
         super(context);
@@ -36,6 +37,10 @@ public class CameraView extends SurfaceView  implements SurfaceHolder.Callback {
 
     public CameraView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    public void setSaveImageCallback(SaveImageInterface saveImageInterface) {
+        this.saveImageInterface = saveImageInterface;
     }
 
     public void start() throws IOException {
@@ -86,24 +91,26 @@ public class CameraView extends SurfaceView  implements SurfaceHolder.Callback {
         try {
             camera.stopPreview();
         } catch (Exception e){
-            // ignore: tried to stop a non-existent preview
+            Log.e(TAG, "Error stopping camera preview: " + e.getMessage());
         }
 
         // set preview size and make any resize, rotate or
         // reformatting changes here
+        Parameters params = camera.getParameters();
+        camera.setDisplayOrientation(90);
+        List<Size> sizes = params.getSupportedPreviewSizes();
+        // TODO: establish previewsize according to supported sizes in order to avoid errors
+        params.setPictureSize(h, w);
+        params.setPreviewSize(h, w);
+        camera.setParameters(params);
+
 
         // start preview with new settings
         try {
-            Parameters params = camera.getParameters();
-            camera.setDisplayOrientation(90);
-            List<Size> sizes = params.getSupportedPreviewSizes();
-            params.setPreviewSize(h, w);
-            camera.setParameters(params);
             camera.setPreviewDisplay(holder);
             camera.startPreview();
-
-        } catch (IOException e){
-            Log.d(TAG, "Error starting camera preview: " + e.getMessage());
+        } catch (Exception e){
+            Log.e(TAG, "Error starting camera preview: " + e.getMessage());
         }
     }
     @Override
@@ -117,5 +124,27 @@ public class CameraView extends SurfaceView  implements SurfaceHolder.Callback {
         holder.getSurface().release();
     }
 
+    public void stop() throws IOException {
+        if(camera != null) {
+            try {
+                camera.stopPreview();
+                camera.release();
+            } catch (Exception e) {
+                Log.e(TAG, e.getMessage());
+            }
+            previewStarted = false;
+            camera = null;
+        }
+    }
 
+    public void takePicture() {
+        camera.takePicture(null, null, pictureCallback);
+    }
+
+    private Camera.PictureCallback pictureCallback = new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            saveImageInterface.saveImage(data);
+        }
+    };
 }

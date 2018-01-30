@@ -1,17 +1,25 @@
 package cat.oreilly.vararo.activities;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 import android.support.design.widget.FloatingActionButton;
 
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +29,8 @@ import cat.oreilly.vararo.model.InventoryItem;
 import cat.oreilly.vararo.R;
 
 public class MainActivity extends AppCompatActivity implements ItemLoaderInterface, View.OnClickListener {
+    private String TAG = "MainActivity";
+
     RecyclerView recyclerView;
     InventoryItemListAdapter rvAdapter;
     List<InventoryItem> items;
@@ -28,7 +38,8 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
     private FloatingActionButton fabAddItem, fabAddPicture, fabAddFolder;
     private Boolean isFabOpen = false;
     private Animation fabOpen, fabClose, rotateForward, rotateBackward;
-    
+    Long currentParent;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,29 +56,51 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
         fabAddFolder.setOnClickListener(this);
         fabAddPicture.setOnClickListener(this);
 
-        textView = (TextView) findViewById(R.id.no_items);
-        recyclerView = (RecyclerView) findViewById(R.id.item_list); // cerquem la nostra vista de tipus RecyclerView
-        loadChildren(null);
+        textView =  findViewById(R.id.no_items);
+        recyclerView = findViewById(R.id.item_list); // cerquem la nostra vista de tipus RecyclerView
+
+        captureIntent(null);
+
+        loadChildren(currentParent);
         if (items.isEmpty()) {
             textView.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
             textView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
+            rvAdapter = new InventoryItemListAdapter(this, items); // creem un nou adapter que generarà la nostra llista
+            recyclerView.setAdapter(rvAdapter); // establim mAdapter com l'adapter de la nostra vista
+            recyclerView.setLayoutManager(new GridLayoutManager(this,2));
         }
-        rvAdapter = new InventoryItemListAdapter(this, items); // creem un nou adapter que generarà la nostra llista
-        recyclerView.setAdapter(rvAdapter); // establim mAdapter com l'adapter de la nostra vista
-        recyclerView.setLayoutManager(new GridLayoutManager(this,2));
+
     }
 
-    private void loadChildren(UUID id) {
+    @Override
+    protected void onNewIntent(Intent intent) {
+        captureIntent(intent);
+    }
+
+    private void captureIntent(Intent intent) {
+        if (intent == null) {
+            if (getIntent() != null && getIntent().getAction() != null) {
+                intent = getIntent();
+            }
+        }
+
+        currentParent = (Long) this.getIntent().getSerializableExtra(CameraActivity.PARENT_UUID);
+    }
+
+    private void loadChildren(Long id) {
         if (id == null) {
-            id = new UUID(0,0);
+            currentParent = 0L;
+        } else {
+            currentParent = id;
         }
-        items = InventoryItem.find(InventoryItem.class, "parent = ?", id.toString());
+        Log.d(TAG, currentParent.toString());
+        items = InventoryItem.find(InventoryItem.class, "parent = ?", currentParent.toString());
     }
 
-    public void openItem(UUID id) {
+    public void openItem(Long id) {
         loadChildren(id);
         rvAdapter.setItems(items);
     }
@@ -82,6 +115,9 @@ public class MainActivity extends AppCompatActivity implements ItemLoaderInterfa
             case R.id.fab_new_folder:
                 break;
             case R.id.fab_new_picture:
+                Intent intent = new Intent(this, CameraActivity.class);
+                intent.putExtra(CameraActivity.PARENT_UUID, currentParent);
+                startActivity(intent);
                 break;
         }
     }

@@ -5,27 +5,21 @@ import com.orm.SugarRecord;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by ciaran on 20/12/17.
- */
-
 public class InventoryItem extends SugarRecord {
     String name;
     String mainPicture;
     List<String> pictures;
-    UUID id;
-    UUID parent;
+    Long parent;
     List<InventoryTag> tags;
 
     public InventoryItem(){}
 
-    public InventoryItem(String name, String mainPicture, List<String> pictures, UUID parent, List<InventoryTag> tags) {
+    public InventoryItem(String name, String mainPicture, List<String> pictures, Long parent, List<InventoryTag> tags) {
         this.name = name;
         this.mainPicture = mainPicture;
         this.pictures = pictures;
-        this.parent = (parent == null) ? new UUID(0,0): parent;
+        this.parent = (parent == null) ? 0L : parent;
         this.tags = tags;
-        this.id = UUID.randomUUID();
     }
     public String getName() {
         return name;
@@ -39,11 +33,7 @@ public class InventoryItem extends SugarRecord {
         return pictures;
     }
 
-    public UUID getUid() {
-        return id;
-    }
-
-    public UUID getParent() {
+    public Long getParent() {
         return parent;
     }
 
@@ -63,7 +53,7 @@ public class InventoryItem extends SugarRecord {
         this.pictures = pictures;
     }
 
-    public void setParent(UUID parent) {
+    public void setParent(Long parent) {
         this.parent = parent;
     }
 
